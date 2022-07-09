@@ -1,0 +1,35 @@
+GetLibraryVersion:
+  id: 0x15
+  types:
+    - name: LibraryType
+      type: byte
+  constants:
+    - name: StaticControllerLibrary
+      type: LibraryType
+      value: 0x01
+    - name: PortableControllerLibrary
+      type: LibraryType
+      value: 0x02
+    - name: Enhanced232EndNodeLibrary
+      type: LibraryType
+      value: 0x03
+    - name: EndNodeLibrary
+      type: LibraryType
+      value: 0x04
+    - name: InstallerLibrary
+      type: LibraryType
+      value: 0x05
+    - name: RoutingEndNodeLibrary
+      type: LibraryType
+      value: 0x06
+    - name: BridgeControllerLibrary
+      type: LibraryType
+      value: 0x07
+  response:
+    type: ack+res
+    fields:
+      - name: LibraryVersion
+        type: "string"
+        length: 12
+      - name: LibraryType
+        type: LibraryType
