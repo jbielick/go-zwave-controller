@@ -1,17 +1,20 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime"
-	"time"
+	"syscall"
 
-	"github.com/jbielick/zwgo/api"
+	"github.com/jbielick/zwgo/controller"
 	log "github.com/sirupsen/logrus"
 )
 
-var deviceFlag = flag.String("device", "", "Name of the zwave serial device (/dev/ttyACM0 for example). Use of this flag disables autodiscovery.")
+var portFlag = flag.String("port", "", "Name of the zwave serial port (/dev/ttyACM0 for example). Use of this flag disables autodiscovery.")
 var verbosityFlag = flag.String("log-level", "INFO", "Logging verbosity")
 
 func init() {
@@ -24,59 +27,46 @@ func init() {
 }
 
 func main() {
-	// v := C.ZW_CHIMNEY_FAN_MIN_SPEED_SET_FRAME{}
-	var device string
+	var port string
 
-	if len(*deviceFlag) > 0 {
-		device = *deviceFlag
+	if len(*portFlag) > 0 {
+		port = *portFlag
 	} else {
-		log.Info("Discovering device...")
-		devices, err := discoverDevices()
+		log.Info("Discovering port...")
+		ports, err := discoverPorts()
 		if err != nil {
 			log.Fatal(err)
 		}
-		if len(devices) < 1 {
-			log.Fatal("Failed to find device, please provide -device flag to specify the device explicitly.")
+		if len(ports) < 1 {
+			log.Fatal("Failed to find port, please provide -port flag to specify the port explicitly.")
 		}
-		device = devices[0]
+		port = ports[0]
 	}
-	log.Infof("Using device %s", device)
+	log.Infof("Using port %s", port)
 
-	c := api.NewController(device)
+	c := controller.New(controller.NewConfig(port))
 	err := c.Open()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer c.Close()
+	log.Printf("DEBUG: %+v\n", c)
 
-	for {
-		r, err := c.GetLibraryVersion()
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		log.Infof("Controller Library Version: %+v", r)
-		time.Sleep(1 * time.Second)
-	}
+	s := make(chan os.Signal)
+	signal.Notify(s, os.Interrupt)
+	signal.Notify(s, syscall.SIGTERM)
 
-	// frame2, err := c.SendAndReceive(api.NewRequest(api.GET_PROTOCOL_VERSION, []byte{}))
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return
-	// }
-	// log.Infof("Controller Protocol Version: %s", frame2.PayloadString())
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		<-s
+		signal.Stop(s)
+		cancel()
+	}()
 
-	// frame3, err := c.SendAndReceive(api.NewRequest(api.GET_INIT_DATA, []byte{}))
-	// if err != nil {
-	// 	log.Error(err)
-	// 	return
-	// }
-	// r := new(api.GetInitDataResponse)
-	// r.UnmarshalBinary(frame3.Payload)
-	// log.Infof("Init Data: %s", r.APIVersion.String())
+	<-ctx.Done()
 }
 
-func discoverDevices() ([]string, error) {
+func discoverPorts() ([]string, error) {
 	var glob string
 	switch runtime.GOOS {
 	case "darwin":
@@ -84,7 +74,7 @@ func discoverDevices() ([]string, error) {
 	case "linux":
 		glob = "/dev/ttyACM*"
 	default:
-		log.Fatalf("must provide device argument for platform %s", runtime.GOOS)
+		log.Fatalf("must provide port argument for platform %s", runtime.GOOS)
 	}
 	return filepath.Glob(glob)
 }

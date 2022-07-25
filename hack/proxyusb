@@ -1,0 +1,38 @@
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+  echo "
+  $0 <host> <port>
+
+EXAMPLE:
+
+  $0 homebridge.local 32376
+
+  where ser2net is running on homebridge.local accepting clients on tcp:32376
+  for the USB device we're proxying here.
+"
+}
+
+if [ "${1:-}" = "" ]; then
+  echo "missing host argument"
+  usage
+  exit 1
+fi
+
+if [ "${2:-}" = "" ]; then
+  echo "missing port argument"
+  usage
+  exit 1
+fi
+
+echo "starting socat link $HOME/vmodem0..."
+
+stop() {
+  echo "end link $HOME/vmodem0"
+}
+
+trap stop EXIT
+
+socat "PTY,rawer,link=$HOME/vmodem0" "tcp:$1:$2"

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<zw_classes version="2.0.0">
+  <cmd_class key="0x00" version="0" name="COMMAND_CLASS_CAPABILITIES" help="" read_only="false">
+    <cmd key="0x15" name="LIBRARY_VERSION_GET" help="" />
+    <cmd key="0x15" name="LIBRARY_VERSION_REPORT" help="">
+      <param key="0x00" name="Version" type="ARRAY" typehashcode="0x05">
+        <arrayattrib key="0x00" len="12" is_ascii="true" showhex="false" />
+      </param>
+      <param key="0x01" name="Library Type" type="ENUM" typehashcode="0x08" comment="" optionaloffs="0x01" optionalmask="0x02">
+        <enum key="0x01" name="StaticController" />
+        <enum key="0x02" name="PortableController" />
+        <enum key="0x03" name="Enhanced232EndNode" />
+        <enum key="0x04" name="EndNode" />
+        <enum key="0x05" name="Installer" />
+        <enum key="0x06" name="RoutingEndNode" />
+        <enum key="0x07" name="BridgeController" />
+        <enum key="0x08" name="DUT" />
+        <enum key="0x0A" name="AvRemote" />
+        <enum key="0x0B" name="AvDevice" />
+      </param>
+    </cmd>
+    <cmd key="0x02" name="INIT_DATA_GET" help="" />
+    <cmd key="0x02" name="INIT_DATA_REPORT" help="">
+      <param key="0x00" name="API Version" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x01" name="API Capabilities" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x02" name="Node List Length" type="BYTE" typehashcode="0x01" comment="">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x03" name="Node List" type="BYTE" typehashcode="0x01" comment="">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <!-- <param key="0x00" name="API Version" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x00" name="API Capabilities" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param> -->
+    </cmd>
+    <cmd key="0x07" name="CAPABILITIES_GET" help="" />
+    <cmd key="0x07" name="CAPABILITIES_REPORT" help="">
+      <param key="0x00" name="Version" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x01" name="Revision" type="BYTE" typehashcode="0x01">
+        <valueattrib key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x02" name="Manufacturer ID" type="WORD" typehashcode="0x02" comment="">
+        <word key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x03" name="Product Type" type="WORD" typehashcode="0x02" comment="">
+        <word key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x04" name="Product ID" type="WORD" typehashcode="0x02" comment="">
+        <word key="0x00" hasdefines="false" showhex="true" />
+      </param>
+      <param key="0x05" name="Supported Commands" type="ARRAY" typehashcode="0x05">
+        <arrayattrib key="0x00" len="16" is_ascii="false" showhex="true" />
+      </param>
+    </cmd>
+  </cmd_class>
+</zw_classes>

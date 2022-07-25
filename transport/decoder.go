@@ -1,4 +1,4 @@
-package api
+package transport
 
 import (
 	"fmt"
@@ -13,9 +13,8 @@ type state int
 const (
 	stateBeginFrame state = iota
 	stateLength
-	stateCommandType
-	stateCommandID
-	statePayload
+	stateDataFrameType
+	stateStartPayload
 	stateEndPayload
 )
 
@@ -34,11 +33,8 @@ func NewDecoder(r io.Reader) *Decoder {
 
 func (d *Decoder) More() error {
 	nBytes, err := d.r.Read(d.buf)
-	if err != nil && err != io.EOF {
+	if err != nil {
 		return err
-	}
-	if err == io.EOF {
-		log.Warn("EOF")
 	}
 	if nBytes < 1 {
 		log.Warn("got 0 bytes when reading")
@@ -69,25 +65,24 @@ func (d *Decoder) Next() (*Frame, error) {
 	if err != nil {
 		return nil, err
 	}
-	// fmt.Printf("%v ", b)
+
 	switch d.state {
 	case stateBeginFrame:
 		return d.stateBeginFrame(b)
 	case stateLength:
 		return d.stateLength(b)
-	case stateCommandType:
-		return d.stateCommandType(b)
-	case stateCommandID:
-		return d.stateCommandID(b)
-	case statePayload:
-		return d.statePayload(b)
+	case stateDataFrameType:
+		return d.stateDataFrameType(b)
+	case stateStartPayload:
+		return d.stateStartPayload(b)
 	case stateEndPayload:
 		return d.stateEndPayload(b)
 	default:
 		return nil, fmt.Errorf(
-			"decoder in unexpected state while decoding frame: state=%s frame=%s",
+			"decoder in unexpected state while decoding frame: state=%s frame=%s byte=%q",
 			d.state,
 			d.dataFrame,
+			b,
 		)
 	}
 }
@@ -111,30 +106,19 @@ func (d *Decoder) stateBeginFrame(b byte) (*Frame, error) {
 
 func (d *Decoder) stateLength(b byte) (*Frame, error) {
 	d.dataFrame.Len = int(b)
-	d.state = stateCommandType
+	d.state = stateDataFrameType
 	return d.Next()
 }
 
-func (d *Decoder) stateCommandType(b byte) (*Frame, error) {
-	d.dataFrame.SetCommandType(CommandType(b))
-	d.state = stateCommandID
+func (d *Decoder) stateDataFrameType(b byte) (*Frame, error) {
+	d.dataFrame.SetDataFrameType(DataFrameType(b))
+	d.state = stateStartPayload
 	return d.Next()
 }
 
-func (d *Decoder) stateCommandID(b byte) (*Frame, error) {
-	d.dataFrame.SetCommandID(CommandID(b))
-	if d.dataFrame.Len == d.dataFrame.Length() {
-		// no payload
-		d.state = stateEndPayload
-	} else {
-		d.state = statePayload
-	}
-	return d.Next()
-}
-
-func (d *Decoder) statePayload(b byte) (*Frame, error) {
+func (d *Decoder) stateStartPayload(b byte) (*Frame, error) {
 	d.dataFrame.Payload = append(d.dataFrame.Payload, b)
-	if len(d.dataFrame.Payload) == d.dataFrame.Len-3 {
+	if len(d.dataFrame.Payload) == d.dataFrame.Len-2 {
 		d.state = stateEndPayload
 	}
 	return d.Next()
@@ -152,5 +136,7 @@ func (d *Decoder) stateEndPayload(statedSum byte) (*Frame, error) {
 	d.state = stateBeginFrame
 	dataFrame := d.dataFrame
 	d.dataFrame = nil
+	log.Printf("%#v %q", dataFrame, dataFrame.Checksum())
+
 	return dataFrame, nil
 }
